@@ -3228,8 +3228,8 @@ __metadata:
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.17
-  resolution: "@livekit/components-react@npm:2.9.17"
+  version: 2.9.19
+  resolution: "@livekit/components-react@npm:2.9.19"
   dependencies:
     "@livekit/components-core": "npm:0.12.12"
     clsx: "npm:2.1.1"
@@ -3238,14 +3238,14 @@ __metadata:
     usehooks-ts: "npm:3.1.1"
   peerDependencies:
     "@livekit/krisp-noise-filter": ^0.2.12 || ^0.3.0
-    livekit-client: ^2.15.14
+    livekit-client: ^2.16.0
     react: ">=18"
     react-dom: ">=18"
     tslib: ^2.6.2
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/ba64ada37d4b3ce4d5ee7c5b2a6bddbffc17c2e641e95881aac9f02b4ff7428105e0a372d364e50ff124e988b7426d322d94caabdb55b634aebf0144d7e37f99
+  checksum: 10c0/9fce25fb1783183c8f2422550ab00e07f5a19ef6553b7c4d673a4b125a0b08b037765c27cabf4f9c0cbed3d66266dd8ea9065ce90d67f5d7201d3d9a502da32c
   languageName: node
   linkType: hard
 
