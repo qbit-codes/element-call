@@ -6144,8 +6144,8 @@ __metadata:
   linkType: hard
 
 "@vector-im/compound-design-tokens@npm:^6.0.0":
-  version: 6.6.0
-  resolution: "@vector-im/compound-design-tokens@npm:6.6.0"
+  version: 6.8.0
+  resolution: "@vector-im/compound-design-tokens@npm:6.8.0"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -6154,13 +6154,13 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/93b152dd1de96371f9b6b1f7dbcc381d7ab598031dbc900f52d610f015766c0d4426ae6e47d417e723bfb62d1a53099155b4d788848b78232916ba132c03c2fe
+  checksum: 10c0/e04036271ca11bd27c7f48f2295d0427757f9173baebb9cfe716109df55312febb3223ddf027cd134fa5d73f9b04fc6612533eac3a7a3a5a04bbc95d4861d3e8
   languageName: node
   linkType: hard
 
 "@vector-im/compound-web@npm:^8.0.0":
-  version: 8.3.4
-  resolution: "@vector-im/compound-web@npm:8.3.4"
+  version: 8.3.6
+  resolution: "@vector-im/compound-web@npm:8.3.6"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.16"
@@ -6180,7 +6180,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/44764fa64b5fce2e7181e25b50ee970eda4d921cf650b92bd5e88df0eb60872f3086b8702d18f55c3e39b3751ac19f10bafda8c4306df65c3605bd44b297d95c
+  checksum: 10c0/2b5601f2f2adf6d6d07dfdaf91ab739690ef12f51fd6f00fb7f814c45d5b4212bbf383dbb20b675de635894481ab591e7217b0cfadfbef7a05387f3abaffe28b
   languageName: node
   linkType: hard
 
