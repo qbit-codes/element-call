@@ -14,7 +14,7 @@ import {
   useEffect,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -52,6 +52,9 @@ import {
 import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
+import { useOptionalKYCRoomRequirement } from "../kyc/useKYCState";
+import type { KYCLevel } from "../kyc/types";
+import { ElementWidgetActions, widget } from "../widget";
 
 interface Props {
   client: MatrixClient;
@@ -64,6 +67,7 @@ interface Props {
   participantCount: number | null;
   onShareClick: (() => void) | null;
   waitingForInvite?: boolean;
+  room?: Room;
 }
 
 export const LobbyView: FC<Props> = ({
@@ -77,6 +81,7 @@ export const LobbyView: FC<Props> = ({
   participantCount,
   onShareClick,
   waitingForInvite,
+  room,
 }) => {
   useEffect(() => {
     logger.info("[Lifecycle] LobbyView Component mounted");
@@ -183,6 +188,77 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
+  // --- KYC Enforcement Toggle (admin only) ---
+  const kycRequirement = useOptionalKYCRoomRequirement(room);
+  const [kycEnabled, setKycEnabled] = useState(false);
+  const [kycLevel, setKycLevel] = useState<KYCLevel>("standard");
+
+  // Sync local state with room state
+  useEffect(() => {
+    if (kycRequirement) {
+      setKycEnabled(true);
+      setKycLevel(kycRequirement.required_level);
+    } else {
+      setKycEnabled(false);
+    }
+  }, [kycRequirement]);
+
+  // Check if user has moderator power level (>= 50)
+  const isAdmin = useMemo(() => {
+    if (!room || !client) return false;
+    const userId = client.getUserId();
+    if (!userId) return false;
+    const powerLevels = room.currentState.getStateEvents(
+      "m.room.power_levels",
+      "",
+    );
+    if (!powerLevels) return false;
+    const content = powerLevels.getContent();
+    const userPl = content.users?.[userId] ?? content.users_default ?? 0;
+    return userPl >= 50;
+  }, [room, client]);
+
+  const handleKycToggle = useCallback(() => {
+    const newEnabled = !kycEnabled;
+    setKycEnabled(newEnabled);
+
+    if (widget) {
+      widget.api.transport
+        .send(ElementWidgetActions.KYCSetRoomRequirement, {
+          enabled: newEnabled,
+          level: newEnabled ? kycLevel : "none",
+          room_id: matrixInfo.roomId,
+          user_id: matrixInfo.userId,
+        })
+        .catch((e: unknown) => {
+          logger.error("Failed to send KYC requirement action", e);
+          // Revert on failure
+          setKycEnabled(!newEnabled);
+        });
+    }
+  }, [kycEnabled, kycLevel, matrixInfo.roomId, matrixInfo.userId]);
+
+  const handleKycLevelChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const newLevel = e.target.value as KYCLevel;
+      setKycLevel(newLevel);
+
+      if (widget && kycEnabled) {
+        widget.api.transport
+          .send(ElementWidgetActions.KYCSetRoomRequirement, {
+            enabled: true,
+            level: newLevel,
+            room_id: matrixInfo.roomId,
+            user_id: matrixInfo.userId,
+          })
+          .catch((e: unknown) => {
+            logger.error("Failed to send KYC level change action", e);
+          });
+      }
+    },
+    [kycEnabled, matrixInfo.roomId, matrixInfo.userId],
+  );
+
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
   return (
@@ -242,6 +318,46 @@ export const LobbyView: FC<Props> = ({
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>
+          {room && isAdmin && (
+            <div className={styles.kycSection}>
+              <div className={styles.kycToggleRow}>
+                <label className={styles.kycLabel}>
+                  {t("lobby.kyc_require_label", "Require KYC")}
+                </label>
+                <button
+                  className={classNames(styles.kycToggle, {
+                    [styles.kycToggleOn]: kycEnabled,
+                  })}
+                  onClick={handleKycToggle}
+                  aria-checked={kycEnabled}
+                  role="switch"
+                >
+                  <span className={styles.kycToggleThumb} />
+                </button>
+              </div>
+              {kycEnabled && (
+                <div className={styles.kycLevelRow}>
+                  <label className={styles.kycLabel}>
+                    {t("lobby.kyc_level_label", "Level")}
+                  </label>
+                  <select
+                    className={styles.kycLevelSelect}
+                    value={kycLevel}
+                    onChange={handleKycLevelChange}
+                  >
+                    <option value="basic">Basic</option>
+                    <option value="standard">Standard</option>
+                    <option value="enhanced">Enhanced</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+          {room && !isAdmin && kycRequirement && (
+            <div className={styles.kycBadge}>
+              {t("lobby.kyc_required_badge", "KYC Required")}
+            </div>
+          )}
         </div>
       </div>
       {client && (

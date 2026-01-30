@@ -440,6 +440,7 @@ export const GroupCallView: FC<Props> = ({
         hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
         onShareClick={onShareClick}
+        room={room}
       />
     </>
   );

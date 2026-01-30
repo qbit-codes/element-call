@@ -48,6 +48,8 @@ export enum ElementWidgetActions {
   KYCVerificationRequired = "org.entangle.kyc.verification_required",
   // toWidget: parent notifies widget that KYC verification has been updated
   KYCVerificationUpdated = "org.entangle.kyc.verification_updated",
+  // fromWidget: admin sets or removes KYC room requirement
+  KYCSetRoomRequirement = "org.entangle.kyc.set_room_requirement",
 }
 
 export interface JoinCallData {

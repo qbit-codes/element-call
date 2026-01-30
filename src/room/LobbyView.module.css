@@ -39,3 +39,78 @@ Please see LICENSE in the repository root for full details.
     gap: var(--cpd-space-10x);
   }
 }
+
+/* KYC Enforcement Section */
+.kycSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-2x);
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  border-radius: var(--cpd-space-3x);
+  margin-top: var(--cpd-space-2x);
+  width: 100%;
+  max-width: 360px;
+}
+
+.kycToggleRow,
+.kycLevelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cpd-space-3x);
+}
+
+.kycLabel {
+  font: var(--cpd-font-body-sm-semibold);
+  color: var(--cpd-color-text-primary);
+}
+
+.kycToggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: var(--cpd-color-bg-action-secondary-rest);
+  cursor: pointer;
+  padding: 2px;
+  transition: background 0.2s;
+}
+
+.kycToggleOn {
+  background: var(--cpd-color-bg-action-primary-rest);
+}
+
+.kycToggleThumb {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  transition: transform 0.2s;
+  transform: translateX(0);
+}
+
+.kycToggleOn .kycToggleThumb {
+  transform: translateX(20px);
+}
+
+.kycLevelSelect {
+  font: var(--cpd-font-body-sm-regular);
+  color: var(--cpd-color-text-primary);
+  background: var(--cpd-color-bg-canvas-default);
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-space-2x);
+  padding: var(--cpd-space-1x) var(--cpd-space-2x);
+  cursor: pointer;
+}
+
+.kycBadge {
+  font: var(--cpd-font-body-xs-semibold);
+  color: var(--cpd-color-text-critical-primary);
+  background: var(--cpd-color-bg-critical-subtle);
+  padding: var(--cpd-space-1x) var(--cpd-space-3x);
+  border-radius: var(--cpd-space-4x);
+  margin-top: var(--cpd-space-2x);
+}

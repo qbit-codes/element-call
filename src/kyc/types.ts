@@ -20,7 +20,6 @@ export interface KYCRoomRequirement {
   required_level: KYCLevel;
   required_verifications: string[];
   grace_period_hours?: number;
-  allow_observer_mode: boolean;
   rejection_message: string;
   set_at: number;
   set_by: string;
@@ -48,7 +47,6 @@ export interface KYCValidationResult {
   reason?: string;
   missingLevel?: KYCLevel;
   missingVerifications?: string[];
-  canObserve?: boolean;
 }
 
 /**

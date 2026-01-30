@@ -201,6 +201,8 @@ export const RoomPage: FC = () => {
           <KYCBlockedView
             validationResult={groupCallState.validationResult}
             roomRequirement={groupCallState.roomRequirement}
+            roomId={groupCallState.roomId}
+            userId={groupCallState.userId}
           />
         );
       case "failed":

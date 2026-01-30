@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback } from "react";
+import { type FC, useCallback, useState } from "react";
 import { BigIcon, Button, Heading, Text } from "@vector-im/compound-web";
 import { LockSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -18,30 +18,40 @@ import styles from "./KYCBlockedView.module.css";
 interface Props {
   validationResult: KYCValidationResult;
   roomRequirement: KYCRoomRequirement;
+  roomId: string;
+  userId: string;
+  isVerifying?: boolean;
+  verificationError?: string | null;
 }
 
 export const KYCBlockedView: FC<Props> = ({
   validationResult,
   roomRequirement,
+  roomId,
+  userId,
+  isVerifying: externalIsVerifying,
+  verificationError: externalError,
 }) => {
+  const [localVerifying, setLocalVerifying] = useState(false);
+  const isVerifying = externalIsVerifying ?? localVerifying;
+  const verificationError = externalError ?? null;
+
   const handleStartVerification = useCallback(() => {
     if (widget) {
+      setLocalVerifying(true);
       widget.api.transport
         .send(ElementWidgetActions.KYCVerificationRequired, {
           required_level: roomRequirement.required_level,
           required_verifications: roomRequirement.required_verifications,
+          room_id: roomId,
+          user_id: userId,
         })
         .catch((e) => {
           logger.error("Failed to send KYC verification required action", e);
+          setLocalVerifying(false);
         });
     }
-  }, [roomRequirement]);
-
-  const handleObserverMode = useCallback(() => {
-    // Observer mode - join without media access
-    logger.info("User chose observer mode for KYC-required room");
-    // TODO: Implement observer mode join (view-only, no media)
-  }, []);
+  }, [roomRequirement, roomId, userId]);
 
   return (
     <FullScreenView>
@@ -53,9 +63,17 @@ export const KYCBlockedView: FC<Props> = ({
           Verification Required
         </Heading>
         <Text size="md" className={styles.message}>
-          {validationResult.reason ?? roomRequirement.rejection_message}
+          {isVerifying
+            ? "Verifying identity..."
+            : (validationResult.reason ?? roomRequirement.rejection_message)}
         </Text>
-        {validationResult.missingVerifications &&
+        {verificationError && (
+          <Text size="sm" className={styles.error}>
+            {verificationError}
+          </Text>
+        )}
+        {!isVerifying &&
+          validationResult.missingVerifications &&
           validationResult.missingVerifications.length > 0 && (
             <Text size="sm" className={styles.details}>
               Missing verifications:{" "}
@@ -63,14 +81,17 @@ export const KYCBlockedView: FC<Props> = ({
             </Text>
           )}
         <div className={styles.actions}>
-          <Button kind="primary" onClick={handleStartVerification}>
-            Start Verification
+          <Button
+            kind="primary"
+            onClick={handleStartVerification}
+            disabled={isVerifying}
+          >
+            {isVerifying
+              ? "Verifying..."
+              : verificationError
+                ? "Try Again"
+                : "Start Verification"}
           </Button>
-          {validationResult.canObserve && (
-            <Button kind="secondary" onClick={handleObserverMode}>
-              Join as Observer
-            </Button>
-          )}
         </div>
       </div>
     </FullScreenView>

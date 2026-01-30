@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback } from "react";
-import { type Room } from "matrix-js-sdk";
+import { useCallback, useEffect, useState } from "react";
+import { type Room, RoomEvent } from "matrix-js-sdk";
 
 import { useRoomState } from "../room/useRoomState";
 import {
@@ -31,6 +31,54 @@ export function useKYCRoomRequirement(
       return event.getContent() as KYCRoomRequirement;
     }, []),
   );
+}
+
+/**
+ * Hook to get the KYC room requirement when room may be undefined.
+ * Safe to use in components where room is optional.
+ * Reactively updates when room state changes.
+ * Returns null if room is undefined or no requirement is set.
+ */
+export function useOptionalKYCRoomRequirement(
+  room: Room | undefined,
+): KYCRoomRequirement | null {
+  const [requirement, setRequirement] = useState<KYCRoomRequirement | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!room) {
+      setRequirement(null);
+      return;
+    }
+
+    const readRequirement = (): void => {
+      const event = room.currentState.getStateEvents(
+        KYC_ROOM_REQUIREMENT_EVENT,
+        "",
+      );
+      if (!event) {
+        setRequirement(null);
+        return;
+      }
+      const content = event.getContent() as KYCRoomRequirement;
+      if (!content.required_level) {
+        setRequirement(null);
+        return;
+      }
+      setRequirement(content);
+    };
+
+    readRequirement();
+
+    const onStateUpdate = (): void => readRequirement();
+    room.on(RoomEvent.CurrentStateUpdated, onStateUpdate);
+    return (): void => {
+      room.off(RoomEvent.CurrentStateUpdated, onStateUpdate);
+    };
+  }, [room]);
+
+  return requirement;
 }
 
 /**

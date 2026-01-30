@@ -34,7 +34,7 @@ import {
   EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { widget } from "../widget";
+import { ElementWidgetActions, widget } from "../widget";
 import type {
   KYCRoomRequirement,
   KYCUserVerification,
@@ -75,6 +75,8 @@ export type GroupCallKYCBlocked = {
   kind: "kycBlocked";
   validationResult: KYCValidationResult;
   roomRequirement: KYCRoomRequirement;
+  roomId: string;
+  userId: string;
 };
 
 export type GroupCallStatus =
@@ -370,6 +372,8 @@ export const useLoadGroupCall = (
           kind: "kycBlocked",
           validationResult: result,
           roomRequirement: requirement,
+          roomId: room.roomId,
+          userId,
         });
         throw new Error("KYC_BLOCKED");
       }
@@ -438,6 +442,28 @@ export const useLoadGroupCall = (
     t,
     viaServers,
   ]);
+
+  // Listen for KYCVerificationUpdated from Android when verification completes
+  useEffect(() => {
+    const w = widget;
+    if (!w || state.kind !== "kycBlocked") return;
+
+    const onVerificationUpdated = (): void => {
+      logger.info("KYC verification updated, re-checking requirements");
+      setState({ kind: "loading" });
+    };
+
+    w.lazyActions.on(
+      ElementWidgetActions.KYCVerificationUpdated,
+      onVerificationUpdated,
+    );
+    return (): void => {
+      w.lazyActions.off(
+        ElementWidgetActions.KYCVerificationUpdated,
+        onVerificationUpdated,
+      );
+    };
+  }, [state.kind]);
 
   return state;
 };

@@ -50,7 +50,6 @@ export function validateKYCRequirements(
       reason: requirement.rejection_message,
       missingLevel: requirement.required_level,
       missingVerifications: requirement.required_verifications,
-      canObserve: requirement.allow_observer_mode,
     };
   }
 
@@ -60,7 +59,6 @@ export function validateKYCRequirements(
       allowed: false,
       reason: "Your KYC verification has expired. Please re-verify.",
       missingLevel: requirement.required_level,
-      canObserve: requirement.allow_observer_mode,
     };
   }
 
@@ -70,7 +68,6 @@ export function validateKYCRequirements(
       allowed: false,
       reason: requirement.rejection_message,
       missingLevel: requirement.required_level,
-      canObserve: requirement.allow_observer_mode,
     };
   }
 
@@ -84,7 +81,6 @@ export function validateKYCRequirements(
       allowed: false,
       reason: requirement.rejection_message,
       missingVerifications,
-      canObserve: requirement.allow_observer_mode,
     };
   }
 
