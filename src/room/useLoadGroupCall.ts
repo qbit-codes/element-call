@@ -37,10 +37,7 @@ import {
 import { widget } from "../widget";
 import type {
   KYCRoomRequirement,
-<<<<<<< HEAD
-=======
   KYCUserVerification,
->>>>>>> 05ad22f4 (Add KYC validation for call join using Matrix state events)
   KYCValidationResult,
 } from "../kyc/types";
 import {
@@ -362,13 +359,9 @@ export const useLoadGroupCall = (
         KYC_USER_VERIFICATION_EVENT,
         `_${userId}`,
       );
-<<<<<<< HEAD
-      const verification = verificationEvent?.getContent() ?? null;
-=======
       const verification =
         (verificationEvent?.getContent() as KYCUserVerification | undefined) ??
         null;
->>>>>>> 05ad22f4 (Add KYC validation for call join using Matrix state events)
 
       const result = validateKYCRequirements(requirement, verification);
       if (!result.allowed) {
