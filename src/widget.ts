@@ -148,7 +148,6 @@ export const initializeWidget = (): void => {
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },
-        { eventType: "m.room.power_levels" },
         { eventType: "org.entangle.kyc.room_requirement" },
         { eventType: "org.entangle.kyc.user_verification" },
       ];

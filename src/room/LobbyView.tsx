@@ -203,20 +203,6 @@ export const LobbyView: FC<Props> = ({
     }
   }, [kycRequirement]);
 
-  // Check if user has moderator power level (>= 50)
-  const isAdmin = useMemo(() => {
-    if (!room || !client) return false;
-    const userId = client.getUserId();
-    if (!userId) return false;
-    const powerLevels = room.currentState.getStateEvents(
-      "m.room.power_levels",
-      "",
-    );
-    if (!powerLevels) return false;
-    const content = powerLevels.getContent();
-    const userPl = content.users?.[userId] ?? content.users_default ?? 0;
-    return userPl >= 50;
-  }, [room, client]);
 
   const handleKycToggle = useCallback(() => {
     const newEnabled = !kycEnabled;
@@ -232,8 +218,6 @@ export const LobbyView: FC<Props> = ({
         })
         .catch((e: unknown) => {
           logger.error("Failed to send KYC requirement action", e);
-          // Revert on failure
-          setKycEnabled(!newEnabled);
         });
     }
   }, [kycEnabled, kycLevel, matrixInfo.roomId, matrixInfo.userId]);
@@ -302,23 +286,8 @@ export const LobbyView: FC<Props> = ({
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
         </div>
-        <div className={inCallStyles.footer}>
-          {recentsButtonInFooter && recentsButton}
-          <div className={inCallStyles.buttons}>
-            <MicButton
-              muted={!audioEnabled}
-              onClick={toggleAudio ?? undefined}
-              disabled={toggleAudio === null}
-            />
-            <VideoButton
-              muted={!videoEnabled}
-              onClick={toggleVideo ?? undefined}
-              disabled={toggleVideo === null}
-            />
-            <SettingsButton onClick={openSettings} />
-            {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
-          </div>
-          {room && isAdmin && (
+        {room && (
+          <div className={styles.kycFooter}>
             <div className={styles.kycSection}>
               <div className={styles.kycToggleRow}>
                 <label className={styles.kycLabel}>
@@ -352,12 +321,24 @@ export const LobbyView: FC<Props> = ({
                 </div>
               )}
             </div>
-          )}
-          {room && !isAdmin && kycRequirement && (
-            <div className={styles.kycBadge}>
-              {t("lobby.kyc_required_badge", "KYC Required")}
-            </div>
-          )}
+          </div>
+        )}
+        <div className={inCallStyles.footer}>
+          {recentsButtonInFooter && recentsButton}
+          <div className={inCallStyles.buttons}>
+            <MicButton
+              muted={!audioEnabled}
+              onClick={toggleAudio ?? undefined}
+              disabled={toggleAudio === null}
+            />
+            <VideoButton
+              muted={!videoEnabled}
+              onClick={toggleVideo ?? undefined}
+              disabled={toggleVideo === null}
+            />
+            <SettingsButton onClick={openSettings} />
+            {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
+          </div>
         </div>
       </div>
       {client && (
