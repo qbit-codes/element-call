@@ -35,6 +35,15 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { widget } from "../widget";
+import type {
+  KYCRoomRequirement,
+  KYCValidationResult,
+} from "../kyc/types";
+import {
+  KYC_ROOM_REQUIREMENT_EVENT,
+  KYC_USER_VERIFICATION_EVENT,
+} from "../kyc/types";
+import { validateKYCRequirements } from "../kyc/kycValidation";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -61,12 +70,19 @@ export type GroupCallCanKnock = {
   knock: () => void;
 };
 
+export type GroupCallKYCBlocked = {
+  kind: "kycBlocked";
+  validationResult: KYCValidationResult;
+  roomRequirement: KYCRoomRequirement;
+};
+
 export type GroupCallStatus =
   | GroupCallLoaded
   | GroupCallLoadFailed
   | GroupCallLoading
   | GroupCallWaitForInvite
-  | GroupCallCanKnock;
+  | GroupCallCanKnock
+  | GroupCallKYCBlocked;
 
 const MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE = 3;
 const DELAY_MS_FOR_INVITE_JOIN_FAILURE = 3000;
@@ -326,10 +342,44 @@ export const useLoadGroupCall = (
       return room;
     };
 
+    const checkKYCRequirements = (room: Room): void => {
+      const requirementEvent = room.currentState.getStateEvents(
+        KYC_ROOM_REQUIREMENT_EVENT,
+        "",
+      );
+      if (!requirementEvent) return; // No KYC requirement on this room
+
+      const requirement =
+        requirementEvent.getContent() as KYCRoomRequirement;
+      const userId = client.getUserId();
+      if (!userId) return;
+
+      const verificationEvent = room.currentState.getStateEvents(
+        KYC_USER_VERIFICATION_EVENT,
+        `_${userId}`,
+      );
+      const verification = verificationEvent?.getContent() ?? null;
+
+      const result = validateKYCRequirements(requirement, verification);
+      if (!result.allowed) {
+        logger.info("KYC validation failed for user", userId, result);
+        setState({
+          kind: "kycBlocked",
+          validationResult: result,
+          roomRequirement: requirement,
+        });
+        throw new Error("KYC_BLOCKED");
+      }
+      logger.info("KYC validation passed for user", userId);
+    };
+
     const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
       const room = await fetchOrCreateRoom();
       activeRoom.current = room;
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
+
+      // Check KYC requirements before allowing call join
+      checkKYCRequirements(room);
 
       const rtcSession = client.matrixRTC.getRoomSession(room);
       return rtcSession;
@@ -368,7 +418,12 @@ export const useLoadGroupCall = (
         .then(fetchOrCreateGroupCall)
         .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
         .then(observeMyMembership)
-        .catch((error) => setState({ kind: "failed", error }));
+        .catch((error) => {
+          // KYC blocked state is already set by checkKYCRequirements
+          if (error?.message !== "KYC_BLOCKED") {
+            setState({ kind: "failed", error });
+          }
+        });
     }
   }, [
     bannedError,

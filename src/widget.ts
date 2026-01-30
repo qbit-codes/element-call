@@ -43,6 +43,11 @@ export enum ElementWidgetActions {
   //   video_enabled?: boolean
   // }
   DeviceMute = "io.element.device_mute",
+  // KYC verification actions
+  // fromWidget: notify parent that KYC verification is required to join this call
+  KYCVerificationRequired = "org.entangle.kyc.verification_required",
+  // toWidget: parent notifies widget that KYC verification has been updated
+  KYCVerificationUpdated = "org.entangle.kyc.verification_updated",
 }
 
 export interface JoinCallData {
@@ -99,6 +104,7 @@ export const initializeWidget = (): void => {
         ElementWidgetActions.JoinCall,
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.DeviceMute,
+        ElementWidgetActions.KYCVerificationUpdated,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
           ev.preventDefault();
@@ -140,6 +146,8 @@ export const initializeWidget = (): void => {
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },
+        { eventType: "org.entangle.kyc.room_requirement" },
+        { eventType: "org.entangle.kyc.user_verification" },
       ];
 
       const sendRecvToDevice = [

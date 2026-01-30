@@ -33,6 +33,7 @@ import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 import { widget } from "../widget";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
+import { KYCBlockedView } from "./KYCBlockedView";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
@@ -194,6 +195,13 @@ export const RoomPage: FC = () => {
           <FullScreenView>
             <h1>{t("common.loading")}</h1>
           </FullScreenView>
+        );
+      case "kycBlocked":
+        return (
+          <KYCBlockedView
+            validationResult={groupCallState.validationResult}
+            roomRequirement={groupCallState.roomRequirement}
+          />
         );
       case "failed":
         wasInWaitForInviteState.current = false;
