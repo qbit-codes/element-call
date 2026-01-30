@@ -7,7 +7,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.maven.publish)
+    id("maven-publish")
 }
 
 repositories {
@@ -22,44 +22,39 @@ android {
         compileSdk = 35
         minSdk = 24
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
-mavenPublishing {
-    publishToMavenCentral(automaticRelease = true)
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "io.element.android"
+                artifactId = "element-call-embedded"
+                version = System.getenv("EC_VERSION") ?: "0.16.4-entangle"
 
-    signAllPublications()
-
-    val version = System.getenv("EC_VERSION")
-    coordinates("io.element.android", "element-call-embedded", version)
-    pom {
-        name = "Embedded Element Call for Android"
-        description.set("Android AAR package containing an embedded build of the Element Call widget.")
-        inceptionYear.set("2025")
-        url.set("https://github.com/element-hq/element-call/")
-        licenses {
-            license {
-                name.set("GNU Affero General Public License (AGPL) version 3.0")
-                url.set("https://www.gnu.org/licenses/agpl-3.0.txt")
-                distribution.set("https://www.gnu.org/licenses/agpl-3.0.txt")
-            }
-            license {
-                name.set("Element Commercial License")
-                url.set("https://raw.githubusercontent.com/element-hq/element-call/refs/heads/livekit/LICENSE-COMMERCIAL")
-                distribution.set("https://raw.githubusercontent.com/element-hq/element-call/refs/heads/livekit/LICENSE-COMMERCIAL")
+                pom {
+                    name.set("Embedded Element Call for Android")
+                    description.set("Android AAR package containing an embedded build of the Element Call widget.")
+                    url.set("https://github.com/qbit-codes/element-call/")
+                }
             }
         }
-        developers {
-            developer {
-                id.set("matrixdev")
-                name.set("matrixdev")
-                url.set("https://github.com/element-hq/")
-                email.set("android@element.io")
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/qbit-codes/element-call")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR") ?: findProperty("gpr.user") as String? ?: ""
+                    password = System.getenv("GITHUB_TOKEN") ?: findProperty("gpr.key") as String? ?: ""
+                }
             }
-        }
-        scm {
-            url.set("https://github.com/element-hq/element-call/")
-            connection.set("scm:git:git://github.com/element-hq/element-call.git")
-            developerConnection.set("scm:git:ssh://git@github.com/element-hq/element-call.git")
         }
     }
 }
