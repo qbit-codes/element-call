@@ -37,7 +37,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "io.element.android"
                 artifactId = "element-call-embedded"
-                version = System.getenv("EC_VERSION") ?: "0.16.4-entangle"
+                version = System.getenv("EC_VERSION") ?: "0.16.6-entangle"
 
                 pom {
                     name.set("Embedded Element Call for Android")
