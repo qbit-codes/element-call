@@ -10,6 +10,9 @@ Please see LICENSE in the repository root for full details.
 // createClient, or the typescript transpiler gets confused about
 // dependency references.
 import "matrix-js-sdk/lib/browser-index";
+// Import early so the module-level listener captures native bridge events
+// before React mounts (the native side may send data seconds before KYCProvider).
+import "./kyc/NativeBridge";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -27,6 +30,39 @@ import { AppViewModel } from "./state/AppViewModel";
 import { globalScope } from "./state/ObservableScope";
 
 window.setLKLogLevel = setLKLogLevel;
+
+// Patch JSON.stringify to handle circular references gracefully.
+// Android WebView's console bridge calls JSON.stringify on logged objects,
+// which can throw TypeError on circular structures (e.g. React fiber nodes).
+// This prevents that from crashing the error boundary rendering.
+const _origStringify = JSON.stringify;
+JSON.stringify = function (value: unknown, replacer?: unknown, space?: unknown) {
+  try {
+    return _origStringify.call(
+      JSON,
+      value,
+      replacer as Parameters<typeof _origStringify>[1],
+      space as Parameters<typeof _origStringify>[2],
+    );
+  } catch (e) {
+    if (e instanceof TypeError && (e as TypeError).message?.includes("circular")) {
+      const seen = new WeakSet();
+      return _origStringify.call(
+        JSON,
+        value,
+        function (_key: string, val: unknown) {
+          if (typeof val === "object" && val !== null) {
+            if (seen.has(val)) return "[Circular]";
+            seen.add(val);
+          }
+          return val;
+        },
+        space as Parameters<typeof _origStringify>[2],
+      );
+    }
+    throw e;
+  }
+} as typeof JSON.stringify;
 
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);

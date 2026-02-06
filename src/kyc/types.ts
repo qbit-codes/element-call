@@ -37,6 +37,20 @@ export interface KYCUserVerification {
   verified_at: number;
   expires_at: number;
   verification_hash: string;
+  score?: number;
+  first_name?: string;
+  last_name?: string;
+}
+
+/**
+ * Per-participant KYC info as displayed on video tiles.
+ * Populated from native bridge data.
+ */
+export interface KYCParticipantInfo {
+  score?: number;
+  firstName?: string;
+  lastName?: string;
+  level: KYCLevel;
 }
 
 /**

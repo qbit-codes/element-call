@@ -50,6 +50,7 @@ export enum ElementWidgetActions {
   KYCVerificationUpdated = "org.entangle.kyc.verification_updated",
   // fromWidget: admin sets or removes KYC room requirement
   KYCSetRoomRequirement = "org.entangle.kyc.set_room_requirement",
+  KYCVerify = "org.entangle.kyc.verify"
 }
 
 export interface JoinCallData {
@@ -106,7 +107,6 @@ export const initializeWidget = (): void => {
         ElementWidgetActions.JoinCall,
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.DeviceMute,
-        ElementWidgetActions.KYCVerificationUpdated,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
           ev.preventDefault();
