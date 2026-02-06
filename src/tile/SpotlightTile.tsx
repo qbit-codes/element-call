@@ -46,6 +46,7 @@ import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
+import { useParticipantKYC } from "../kyc/KYCContext";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -63,6 +64,8 @@ interface SpotlightItemBaseProps {
   mxcAvatarUrl: string | undefined;
   focusable: boolean;
   "aria-hidden"?: boolean;
+  kycName?: string;
+  kycScore?: number;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -155,6 +158,11 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
   const encryptionStatus = useBehavior(vm.encryptionStatus$);
+  const kycInfo = useParticipantKYC(vm.userId);
+  const kycName =
+    kycInfo?.firstName || kycInfo?.lastName
+      ? [kycInfo.firstName, kycInfo.lastName].filter(Boolean).join(" ")
+      : undefined;
 
   // Hook this item up to the intersection observer
   useEffect(() => {
@@ -187,6 +195,8 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     focusable,
     encryptionStatus,
     "aria-hidden": ariaHidden,
+    kycName,
+    kycScore: kycInfo?.score,
   };
 
   return vm instanceof ScreenShareViewModel ? (

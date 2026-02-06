@@ -77,8 +77,8 @@ unconditionally select the container so we can use cqmin units */
   );
   display: grid;
   grid-template-columns: 30px 1fr 30px;
-  grid-template-rows: 1fr auto;
-  grid-template-areas: "reactions status ." "nameTag nameTag button";
+  grid-template-rows: 1fr auto auto;
+  grid-template-areas: "reactions status ." "nameTag nameTag button" "kycTag kycTag .";
   gap: var(--cpd-space-1x);
   place-items: start;
 }
@@ -135,6 +135,36 @@ unconditionally select the container so we can use cqmin units */
   overflow: hidden;
   white-space: nowrap;
   padding-inline: var(--cpd-space-2x);
+  flex-shrink: 1;
+}
+
+.kycTag {
+  grid-area: kycTag;
+  place-self: end start;
+  padding: var(--cpd-space-1x);
+  color: var(--cpd-color-text-secondary);
+  background-color: var(--cpd-color-bg-canvas-default);
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-1x);
+  border-radius: var(--cpd-radius-pill-effect);
+  user-select: none;
+  overflow: hidden;
+  box-shadow: var(--small-drop-shadow);
+  box-sizing: border-box;
+  max-inline-size: 100%;
+  opacity: 0.9;
+}
+
+.kycIcon {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-success-primary);
+}
+
+.kycText {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   flex-shrink: 1;
 }
 

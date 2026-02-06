@@ -51,6 +51,7 @@ import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactionsSender } from "../reactions/useReactionsSender";
 import { useBehavior } from "../useBehavior";
+import { useParticipantKYC } from "../kyc/KYCContext";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -63,6 +64,8 @@ interface TileProps {
   mxcAvatarUrl: string | undefined;
   showSpeakingIndicators: boolean;
   focusable: boolean;
+  kycName?: string;
+  kycScore?: number;
 }
 
 interface UserMediaTileProps extends TileProps {
@@ -89,6 +92,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   displayName,
   mxcAvatarUrl,
   focusable,
+  kycName,
+  kycScore,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -202,6 +207,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       rtcBackendIdentity={rtcBackendIdentity}
+      kycName={kycName}
+      kycScore={kycScore}
       {...props}
     />
   );
@@ -373,6 +380,11 @@ export const GridTile: FC<GridTileProps> = ({
   const focusUrl = useBehavior(media.focusUrl$);
   const displayName = useBehavior(media.displayName$);
   const mxcAvatarUrl = useBehavior(media.mxcAvatarUrl$);
+  const kycInfo = useParticipantKYC(media.userId);
+  const kycName =
+    kycInfo?.firstName || kycInfo?.lastName
+      ? [kycInfo.firstName, kycInfo.lastName].filter(Boolean).join(" ")
+      : undefined;
 
   if (media instanceof LocalUserMediaViewModel) {
     return (
@@ -383,6 +395,8 @@ export const GridTile: FC<GridTileProps> = ({
         focusUrl={focusUrl}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        kycName={kycName}
+        kycScore={kycInfo?.score}
         {...props}
       />
     );
@@ -394,6 +408,8 @@ export const GridTile: FC<GridTileProps> = ({
         focusUrl={focusUrl}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        kycName={kycName}
+        kycScore={kycInfo?.score}
         {...props}
       />
     );

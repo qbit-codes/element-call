@@ -12,7 +12,10 @@ import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
 import { Text, Tooltip } from "@vector-im/compound-web";
-import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import {
+  ErrorSolidIcon,
+  VerifiedIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
@@ -53,6 +56,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   rtcBackendIdentity?: string;
   // The focus url, mainly for debugging purposes
   focusUrl?: string;
+  kycName?: string;
+  kycScore?: number;
 }
 
 export const MediaView: FC<Props> = ({
@@ -81,6 +86,8 @@ export const MediaView: FC<Props> = ({
   videoStreamStats,
   rtcBackendIdentity,
   focusUrl,
+  kycName,
+  kycScore,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -195,6 +202,21 @@ export const MediaView: FC<Props> = ({
             </Tooltip>
           )}
         </div>
+        {(kycName || kycScore !== undefined) && (
+          <div className={styles.kycTag}>
+            <VerifiedIcon width={16} height={16} className={styles.kycIcon} />
+            <Text
+              as="span"
+              size="xs"
+              weight="medium"
+              className={styles.kycText}
+            >
+              {kycName}
+              {kycName && kycScore !== undefined && " · "}
+              {kycScore !== undefined && t("video_tile.kyc_score", { score: kycScore })}
+            </Text>
+          </div>
+        )}
         {primaryButton}
       </div>
     </animated.div>
