@@ -147,7 +147,32 @@ export const GroupCallErrorBoundary = ({
   return (
     <ErrorBoundary
       fallback={fallbackRenderer}
-      onError={(error) => onError?.(error)}
+      onError={(error, componentStack, eventId) => {
+        // Extract TypeError details from React's error wrapping
+        const cause = (error as any)?.cause;
+        logger.error("[DEBUG-BOUNDARY] error.message:", (error as any)?.message);
+        logger.error("[DEBUG-BOUNDARY] error.name:", (error as any)?.name);
+        logger.error("[DEBUG-BOUNDARY] error.stack:", (error as any)?.stack);
+        logger.error("[DEBUG-BOUNDARY] cause:", cause);
+        logger.error("[DEBUG-BOUNDARY] cause.message:", cause?.message);
+        logger.error("[DEBUG-BOUNDARY] cause.name:", cause?.name);
+        logger.error("[DEBUG-BOUNDARY] cause.stack:", cause?.stack);
+        if (cause?.cause) {
+          logger.error("[DEBUG-BOUNDARY] cause.cause:", cause.cause);
+          logger.error("[DEBUG-BOUNDARY] cause.cause.message:", cause.cause?.message);
+          logger.error("[DEBUG-BOUNDARY] cause.cause.stack:", cause.cause?.stack);
+        }
+        logger.error("[DEBUG-BOUNDARY] componentStack:", componentStack);
+        // Walk prototype chain
+        let proto = error;
+        const chain: string[] = [];
+        while (proto) {
+          chain.push(proto?.constructor?.name ?? "unknown");
+          proto = Object.getPrototypeOf(proto);
+        }
+        logger.error("[DEBUG-BOUNDARY] prototype chain:", chain.join(" -> "));
+        onError?.(error);
+      }}
       children={children}
     />
   );

@@ -1505,7 +1505,11 @@ export function createCallViewModel$(
     fatalError$: scope.behavior(
       errors$.pipe(
         map((errors) => {
-          logger.debug("errors$ to compute any fatal errors:", errors);
+          try {
+            logger.debug("errors$ to compute any fatal errors:", JSON.stringify(errors));
+          } catch {
+            logger.debug("errors$ to compute any fatal errors: [circular object]", Object.keys(errors ?? {}));
+          }
           return (
             errors?.transportError ??
             errors?.matrixError ??

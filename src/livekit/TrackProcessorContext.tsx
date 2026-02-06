@@ -29,6 +29,7 @@ import {
 import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
+import { widget } from "../widget";
 
 //TODO-MULTI-SFU: This is not yet fully there.
 // it is a combination of exposing observable and react hooks.

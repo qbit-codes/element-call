@@ -17,6 +17,8 @@ import {
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
+import { logger } from "matrix-js-sdk/lib/logger";
+
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
@@ -53,8 +55,11 @@ export const ReactionsSenderProvider = ({
   rtcSession: MatrixRTCSession;
   vm: CallViewModel;
 }): JSX.Element => {
+  logger.debug("[DEBUG-REACTIONS] ReactionsSenderProvider render start");
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  logger.debug("[DEBUG-REACTIONS] after useMatrixRTCSessionMemberships");
   const clientState = useClientState();
+  logger.debug("[DEBUG-REACTIONS] after useClientState");
   const supportsReactions =
     clientState?.state === "valid" && clientState.supportedFeatures.reactions;
   const room = rtcSession.room;
@@ -70,7 +75,9 @@ export const ReactionsSenderProvider = ({
     [memberships, myUserId, myDeviceId],
   );
 
+  logger.debug("[DEBUG-REACTIONS] before useBehavior(vm.reactions$)");
   const reactions = useBehavior(vm.reactions$);
+  logger.debug("[DEBUG-REACTIONS] after useBehavior(vm.reactions$)");
   const myReaction = useMemo(
     () =>
       myMembershipIdentifier !== undefined
@@ -79,7 +86,9 @@ export const ReactionsSenderProvider = ({
     [myMembershipIdentifier, reactions],
   );
 
+  logger.debug("[DEBUG-REACTIONS] before useBehavior(vm.handsRaised$)");
   const handsRaised = useBehavior(vm.handsRaised$);
+  logger.debug("[DEBUG-REACTIONS] after useBehavior(vm.handsRaised$)");
   const myRaisedHand = useMemo(
     () =>
       myMembershipIdentifier !== undefined
