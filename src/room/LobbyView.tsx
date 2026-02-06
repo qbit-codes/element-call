@@ -54,7 +54,12 @@ import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { useOptionalKYCRoomRequirement } from "../kyc/useKYCState";
 import type { KYCLevel } from "../kyc/types";
-import { ElementWidgetActions, widget } from "../widget";
+import {
+  isNativeBridgeAvailable,
+  requestNativeKYCVerification,
+  setNativeKYCRoomRequirement,
+  type KYCVerificationResult,
+} from "../kyc/NativeBridge";
 
 interface Props {
   client: MatrixClient;
@@ -188,60 +193,85 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
-  // --- KYC Enforcement Toggle (admin only) ---
+  // --- KYC Enforcement ---
   const kycRequirement = useOptionalKYCRoomRequirement(room);
   const [kycEnabled, setKycEnabled] = useState(false);
   const [kycLevel, setKycLevel] = useState<KYCLevel>("standard");
+
+  // [TODO]: request from Native if room creator verified KYC. 
+  // if verified then it should enabled the KYC process. 
+  // Only the room creator (call initiator) can toggle KYC requirements
+  const isRoomCreator = useMemo(() => {
+    if (!room || !client) return false;
+    const creatorId = room.getCreator();
+    return creatorId === client.getUserId();
+  }, [room, client]);
 
   // Sync local state with room state
   useEffect(() => {
     if (kycRequirement) {
       setKycEnabled(true);
-      setKycLevel(kycRequirement.required_level);
+      setKycLevel("standard");
     } else {
       setKycEnabled(false);
     }
   }, [kycRequirement]);
 
-
+  // Creator: toggle KYC on/off for the room via native bridge.
+  // The Widget API does not support custom actions - all KYC communication
+  // must go through AndroidKYCBridge which the native app handles directly.
   const handleKycToggle = useCallback(() => {
     const newEnabled = !kycEnabled;
     setKycEnabled(newEnabled);
 
-    if (widget) {
-      widget.api.transport
-        .send(ElementWidgetActions.KYCSetRoomRequirement, {
-          enabled: newEnabled,
-          level: newEnabled ? kycLevel : "none",
-          room_id: matrixInfo.roomId,
-          user_id: matrixInfo.userId,
-        })
-        .catch((e: unknown) => {
-          logger.error("Failed to send KYC requirement action", e);
-        });
-    }
+    setNativeKYCRoomRequirement({
+      roomId: matrixInfo.roomId,
+      userId: matrixInfo.userId,
+      enabled: newEnabled,
+      level: newEnabled ? kycLevel : "none",
+    });
   }, [kycEnabled, kycLevel, matrixInfo.roomId, matrixInfo.userId]);
 
-  const handleKycLevelChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newLevel = e.target.value as KYCLevel;
-      setKycLevel(newLevel);
+  // --- Joiner: KYC verification via native Android bridge ---
+  const [kycVerified, setKycVerified] = useState(false);
+  const [kycVerifying, setKycVerifying] = useState(false);
+  const [kycError, setKycError] = useState<string | null>(null);
 
-      if (widget && kycEnabled) {
-        widget.api.transport
-          .send(ElementWidgetActions.KYCSetRoomRequirement, {
-            enabled: true,
-            level: newLevel,
-            room_id: matrixInfo.roomId,
-            user_id: matrixInfo.userId,
-          })
-          .catch((e: unknown) => {
-            logger.error("Failed to send KYC level change action", e);
-          });
-      }
-    },
-    [kycEnabled, matrixInfo.roomId, matrixInfo.userId],
-  );
+  // A non-creator must verify if the room has a KYC requirement.
+  const mustVerifyKyc = !isRoomCreator && kycRequirement !== null &&
+    kycRequirement !== undefined;
+
+  const handleKycVerification = useCallback(() => {
+    setKycVerifying(true);
+    setKycError(null);
+
+    // Check if we're in the Android WebView with the bridge injected.
+    if (!isNativeBridgeAvailable()) {
+      logger.error("[KYC] Native bridge not available - cannot verify outside Android app");
+      setKycError(t("lobby.kyc_bridge_unavailable", "KYC verification is only available in the mobile app"));
+      setKycVerifying(false);
+      return;
+    }
+
+    requestNativeKYCVerification({
+      roomId: matrixInfo.roomId,
+      userId: matrixInfo.userId,
+      level: kycRequirement?.required_level ?? "standard",
+    })
+      .then((result: KYCVerificationResult) => {
+        logger.info("[KYC] Verification succeeded", {
+          hasToken: !!result.token,
+        });
+        setKycVerified(true);
+        setKycVerifying(false);
+      })
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Verification failed";
+        logger.error("[KYC] Verification failed", e);
+        setKycError(message);
+        setKycVerifying(false);
+      });
+  }, [kycRequirement, matrixInfo.roomId, matrixInfo.userId, t]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
@@ -270,56 +300,66 @@ export const LobbyView: FC<Props> = ({
             videoEnabled={videoEnabled}
             videoTrack={videoTrack}
           >
-            <Button
-              className={classNames(styles.join, {
-                [styles.wait]: waitingForInvite,
-              })}
-              size={waitingForInvite ? "sm" : "lg"}
-              disabled={waitingForInvite}
-              onClick={() => {
-                if (!waitingForInvite) onEnter();
-              }}
-              data-testid="lobby_joinCall"
-            >
-              {enterLabel ?? t("lobby.join_button")}
-            </Button>
+            {/* Non-creator in a KYC-required room: must verify first */}
+            {mustVerifyKyc && !kycVerified ? (
+              <div className={styles.kycVerificationGate}>
+                <p className={styles.kycVerificationMessage}>
+                  {t(
+                    "lobby.kyc_required_message",
+                    "Identity verification is required to join this call.",
+                  )}
+                </p>
+                {kycError && (
+                  <p className={styles.kycError}>{kycError}</p>
+                )}
+                <Button
+                  className={styles.join}
+                  size="lg"
+                  disabled={kycVerifying}
+                  onClick={handleKycVerification}
+                  data-testid="lobby_verifyKyc"
+                >
+                  {kycVerifying
+                    ? t("lobby.kyc_verifying", "Verifying...")
+                    : t("lobby.kyc_verify_button", "Verify Identity")
+                  }
+                </Button>
+              </div>
+            ): (
+              <Button
+                className={classNames(styles.join, {
+                  [styles.wait]: waitingForInvite,
+                })}
+                size={waitingForInvite ? "sm" : "lg"}
+                disabled={waitingForInvite}
+                onClick={() => {
+                  if (!waitingForInvite) onEnter();
+                }}
+                data-testid="lobby_joinCall"
+              >
+                {enterLabel ?? t("lobby.join_button")}
+              </Button>
+            )}
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
         </div>
-        {room && (
+        {room && isRoomCreator && (
           <div className={styles.kycFooter}>
             <div className={styles.kycSection}>
               <div className={styles.kycToggleRow}>
-                <label className={styles.kycLabel}>
+                <span className={styles.kycLabel} id="kyc-toggle-label">
                   {t("lobby.kyc_require_label", "Require KYC")}
-                </label>
-                <button
-                  className={classNames(styles.kycToggle, {
-                    [styles.kycToggleOn]: kycEnabled,
-                  })}
-                  onClick={handleKycToggle}
-                  aria-checked={kycEnabled}
-                  role="switch"
-                >
+                </span>
+                <label className={styles.kycToggleWrapper} aria-labelledby="kyc-toggle-label">
+                  <input
+                    className={styles.kycToggle}
+                    onChange={handleKycToggle}
+                    checked={kycEnabled}
+                    type="checkbox"
+                  />
                   <span className={styles.kycToggleThumb} />
-                </button>
+                </label>
               </div>
-              {kycEnabled && (
-                <div className={styles.kycLevelRow}>
-                  <label className={styles.kycLabel}>
-                    {t("lobby.kyc_level_label", "Level")}
-                  </label>
-                  <select
-                    className={styles.kycLevelSelect}
-                    value={kycLevel}
-                    onChange={handleKycLevelChange}
-                  >
-                    <option value="basic">Basic</option>
-                    <option value="standard">Standard</option>
-                    <option value="enhanced">Enhanced</option>
-                  </select>
-                </div>
-              )}
             </div>
           </div>
         )}

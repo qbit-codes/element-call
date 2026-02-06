@@ -34,7 +34,7 @@ import {
   EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { ElementWidgetActions, widget } from "../widget";
+import { widget } from "../widget";
 import type {
   KYCRoomRequirement,
   KYCUserVerification,
@@ -386,7 +386,10 @@ export const useLoadGroupCall = (
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
 
       // Check KYC requirements before allowing call join
-      checkKYCRequirements(room);
+      // Skip in widget/embedded mode — the host app handles KYC enforcement
+      if (!widget) {
+        checkKYCRequirements(room);
+      }
 
       const rtcSession = client.matrixRTC.getRoomSession(room);
       return rtcSession;
@@ -442,28 +445,6 @@ export const useLoadGroupCall = (
     t,
     viaServers,
   ]);
-
-  // Listen for KYCVerificationUpdated from Android when verification completes
-  useEffect(() => {
-    const w = widget;
-    if (!w || state.kind !== "kycBlocked") return;
-
-    const onVerificationUpdated = (): void => {
-      logger.info("KYC verification updated, re-checking requirements");
-      setState({ kind: "loading" });
-    };
-
-    w.lazyActions.on(
-      ElementWidgetActions.KYCVerificationUpdated,
-      onVerificationUpdated,
-    );
-    return (): void => {
-      w.lazyActions.off(
-        ElementWidgetActions.KYCVerificationUpdated,
-        onVerificationUpdated,
-      );
-    };
-  }, [state.kind]);
 
   return state;
 };

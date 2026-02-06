@@ -42,8 +42,6 @@ Please see LICENSE in the repository root for full details.
 
 /* KYC Enforcement Section */
 .kycFooter {
-  display: flex;
-  justify-content: center;
   width: 100%;
   padding: 0 var(--cpd-space-4x);
 }
@@ -55,13 +53,12 @@ Please see LICENSE in the repository root for full details.
   padding: var(--cpd-space-3x) var(--cpd-space-4x);
   background: var(--cpd-color-bg-subtle-secondary);
   border-radius: var(--cpd-space-3x);
-  margin-top: var(--cpd-space-2x);
   width: 100%;
   max-width: 360px;
+  margin: var(--cpd-space-2x) auto;
 }
 
-.kycToggleRow,
-.kycLevelRow {
+.kycToggleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -73,44 +70,51 @@ Please see LICENSE in the repository root for full details.
   color: var(--cpd-color-text-primary);
 }
 
-.kycToggle {
+.kycToggleWrapper {
   position: relative;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
-  border: none;
-  background: var(--cpd-color-bg-action-secondary-rest);
-  cursor: pointer;
-  padding: 2px;
-  transition: background 0.2s;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
 }
 
-.kycToggleOn {
-  background: var(--cpd-color-bg-action-primary-rest);
+.kycToggle {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
 }
 
 .kycToggleThumb {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--cpd-color-bg-canvas-default);
-  transition: transform 0.2s;
-  transform: translateX(0);
-}
-
-.kycToggleOn .kycToggleThumb {
-  transform: translateX(20px);
-}
-
-.kycLevelSelect {
-  font: var(--cpd-font-body-sm-regular);
-  color: var(--cpd-color-text-primary);
-  background: var(--cpd-color-bg-canvas-default);
-  border: 1px solid var(--cpd-color-border-interactive-secondary);
-  border-radius: var(--cpd-space-2x);
-  padding: var(--cpd-space-1x) var(--cpd-space-2x);
+  position: absolute;
+  inset: 0;
+  background-color: #ccc;
+  border-radius: 28px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.kycToggleThumb::before {
+  content: "";
+  position: absolute;
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.kycToggle:checked + .kycToggleThumb {
+  background-color: var(--cpd-color-bg-action-primary-rest, #4caf50);
+}
+
+.kycToggle:checked + .kycToggleThumb::before {
+  transform: translateX(24px);
+}
+
+.kycToggle:focus + .kycToggleThumb {
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
 }
 
 .kycBadge {
@@ -120,4 +124,32 @@ Please see LICENSE in the repository root for full details.
   padding: var(--cpd-space-1x) var(--cpd-space-3x);
   border-radius: var(--cpd-space-4x);
   margin-top: var(--cpd-space-2x);
+}
+
+/* KYC Verification Gate (shown to joiners when KYC is required) */
+.kycVerificationGate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cpd-space-4x);
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+}
+
+.kycVerificationMessage {
+  font: var(--cpd-font-body-md-regular);
+  color: var(--cpd-color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.kycError {
+  font: var(--cpd-font-body-sm-regular);
+  color: var(--cpd-color-text-critical-primary);
+  background: var(--cpd-color-bg-critical-subtle);
+  padding: var(--cpd-space-2x) var(--cpd-space-4x);
+  border-radius: var(--cpd-space-2x);
+  margin: 0;
+  width: 100%;
 }
