@@ -113,7 +113,12 @@
     "join_as_guest": "Misafir olarak katıl",
     "join_button": "Aramaya katıl",
     "leave_button": "Son aramalara dön",
-    "waiting_for_invite": "İstek gönderildi! Katılmak için izin verilmesi bekleniyor…"
+    "waiting_for_invite": "İstek gönderildi! Katılmak için izin verilmesi bekleniyor…",
+    "kyc_require_label": "Kimlik doğrulama iste",
+    "kyc_required_message": "Bu görüşmeye katılmak için kimlik doğrulaması gereklidir.",
+    "kyc_verifying": "Doğrulanıyor",
+    "kyc_verify_button": "Kimliği Doğrula",
+    "kyc_bridge_unavailable": "KYC doğrulaması yalnızca mobil uygulamada kullanılabilir."
   },
   "log_in": "Giriş yap",
   "logging_in": "Giriliyor…",
@@ -204,6 +209,8 @@
     "mute_for_me": "Benim için sessize al",
     "muted_for_me": "Benim için susturulanlar",
     "volume": "Ses",
-    "waiting_for_media": "Ortam bekleniyor..."
+    "waiting_for_media": "Ortam bekleniyor...",
+    "kyc_score": "Puan: {{score}}",
+    "kyc_verified": "Doğrulanmış"
   }
 }

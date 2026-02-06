@@ -156,7 +156,12 @@
     "join_as_guest": "Join as guest",
     "join_button": "Join call",
     "leave_button": "Back to recents",
-    "waiting_for_invite": "Request sent! Waiting for permission to join…"
+    "waiting_for_invite": "Request sent! Waiting for permission to join…",
+    "kyc_require_label": "Require KYC",
+    "kyc_required_message": "Identity verification is required to join this call.",
+    "kyc_verifying": "Verifying",
+    "kyc_verifying_button": "Verify Identity",
+    "kyc_bridge_unavailable": "KYC verification is only available in the mobile app"
   },
   "log_in": "Log In",
   "logging_in": "Logging in…",
@@ -256,6 +261,8 @@
     "mute_for_me": "Mute for me",
     "muted_for_me": "Muted for me",
     "volume": "Volume",
-    "waiting_for_media": "Waiting for media..."
+    "waiting_for_media": "Waiting for media...",
+    "kyc_score": "Score: {{score}}",
+    "kyc_verified": "Verified"
   }
 }
