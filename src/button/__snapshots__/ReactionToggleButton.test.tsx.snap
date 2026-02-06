@@ -161,3 +161,32 @@ exports[`Can raise hand 1`] = `
   </button>
 </div>
 `;
+
+exports[`Can raise hand 2`] = `
+<div>
+  <button
+    aria-disabled="false"
+    aria-expanded="false"
+    aria-haspopup="true"
+    aria-labelledby="_r_1j_"
+    class="_button_13vu4_8 raisedButton _has-icon_13vu4_60 _icon-only_13vu4_53"
+    data-kind="primary"
+    data-size="lg"
+    role="button"
+    tabindex="0"
+  >
+    <svg
+      aria-hidden="true"
+      fill="currentColor"
+      height="24"
+      viewBox="0 0 24 24"
+      width="24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M11 3a1 1 0 1 1 2 0v8.5a.5.5 0 0 0 1 0V4a1 1 0 1 1 2 0v10.2l3.284-2.597a1.081 1.081 0 0 1 1.47 1.577c-.613.673-1.214 1.367-1.818 2.064-1.267 1.463-2.541 2.934-3.943 4.235A6 6 0 0 1 5 15V7a1 1 0 0 1 1.999 0v5.5a.5.5 0 0 0 1 0V4a1 1 0 0 1 2 0v7.5a.5.5 0 0 0 1 0z"
+      />
+    </svg>
+  </button>
+</div>
+`;
