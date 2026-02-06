@@ -17,7 +17,7 @@ import {
 } from "react";
 
 import type { KYCParticipantInfo } from "./types";
-import { onParticipantVerifications } from "./NativeBridge";
+import { onParticipantVerifications, requestNativeParticipantData } from "./NativeBridge";
 
 interface KYCContextValue {
   getParticipantKYC: (userId: string) => KYCParticipantInfo | null;
@@ -39,9 +39,12 @@ export const KYCProvider: FC<KYCProviderProps> = ({ children }) => {
   );
 
   useEffect(() => {
-    return onParticipantVerifications((map) => {
+    const unsubscribe = onParticipantVerifications((map) => {
       setKycMap(map);
     });
+    // Pull data from native side in case it was sent before we mounted
+    requestNativeParticipantData();
+    return unsubscribe;
   }, []);
 
   const getParticipantKYC = useCallback(

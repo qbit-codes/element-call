@@ -75,6 +75,8 @@ interface AndroidKYCBridge {
   requestKYCVerification(payload: string): void;
   /** Set or remove KYC room requirement. Payload is JSON string. */
   setKYCRoomRequirement(payload: string): void;
+  /** Request the native side to send participant KYC data now. */
+  requestParticipantData(): void;
 }
 
 // Extend Window so Typescript knows about the injected interface
@@ -216,6 +218,26 @@ export function setNativeKYCRoomRequirement(
     window.AndroidKYCBridge!.setKYCRoomRequirement(payload);
   } catch (e) {
     logger.error(`[NativeBridge] Failed to set room requirement: ${e}`);
+  }
+}
+
+// --- Pull-based: WebView requests participant data from Native
+
+/**
+ * Asks the native Android app to send participant KYC data now.
+ * The native side will respond by dispatching a `kyc-participants-data`
+ * CustomEvent, which the existing listener picks up.
+ */
+export function requestNativeParticipantData(): void {
+  if (!isNativeBridgeAvailable()) {
+    return;
+  }
+
+  logger.info("[NativeBridge] Requesting participant data from native side");
+  try {
+    window.AndroidKYCBridge!.requestParticipantData();
+  } catch (e) {
+    logger.error(`[NativeBridge] Failed to request participant data: ${e}`);
   }
 }
 
