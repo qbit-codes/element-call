@@ -84,6 +84,7 @@ import {
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
+import { KYCProvider } from "../kyc/KYCContext";
 import {
   debugTileLayout as debugTileLayoutSetting,
   matrixRTCMode as matrixRTCModeSetting,
@@ -124,6 +125,22 @@ export interface ActiveCallProps extends Omit<
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
+  // Global error interceptor to catch the real error before Sentry mangles it
+  useEffect(() => {
+    const handler = (event: ErrorEvent): void => {
+      logger.error("[DEBUG-GLOBAL-ERROR] message:", event.message);
+      logger.error("[DEBUG-GLOBAL-ERROR] filename:", event.filename);
+      logger.error("[DEBUG-GLOBAL-ERROR] lineno:", event.lineno, "colno:", event.colno);
+      if (event.error) {
+        logger.error("[DEBUG-GLOBAL-ERROR] error.name:", event.error?.name);
+        logger.error("[DEBUG-GLOBAL-ERROR] error.message:", event.error?.message);
+        logger.error("[DEBUG-GLOBAL-ERROR] error.stack:", event.error?.stack);
+      }
+    };
+    window.addEventListener("error", handler);
+    return () => window.removeEventListener("error", handler);
+  }, []);
+
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
   const urlParams = useUrlParams();
@@ -172,12 +189,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     trackProcessorState$,
   ]);
 
+  logger.debug("[DEBUG-ACTIVECALL] render, vm:", vm ? "exists" : "null");
   if (vm === null) return null;
 
+  logger.debug("[DEBUG-ACTIVECALL] rendering ReactionsSenderProvider + InCallView");
   return (
-    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-      <InCallView {...props} vm={vm} />
-    </ReactionsSenderProvider>
+    <KYCProvider>
+      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+        <InCallView {...props} vm={vm} />
+      </ReactionsSenderProvider>
+    </KYCProvider>
   );
 };
 
@@ -203,8 +224,10 @@ export const InCallView: FC<InCallViewProps> = ({
   onShareClick,
 }) => {
   const { t } = useTranslation();
+  logger.debug("[DEBUG-RENDER] InCallView render start");
   const { supportsReactions, sendReaction, toggleRaisedHand } =
     useReactionsSender();
+  logger.debug("[DEBUG-RENDER] after useReactionsSender");
 
   useWakeLock();
   // TODO-MULTI-SFU This is unused now??
@@ -225,9 +248,12 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const { showControls } = useUrlParams();
 
+  logger.debug("[DEBUG-RENDER] before muteAllAudio");
   const muteAllAudio = useBehavior(muteAllAudio$);
+  logger.debug("[DEBUG-RENDER] before callPickupState");
   // Call pickup state and display names are needed for waiting overlay/sounds
   const callPickupState = useBehavior(vm.callPickupState$);
+  logger.debug("[DEBUG-RENDER] after callPickupState");
 
   // Preload a waiting and decline sounds
   const pickupPhaseSoundCache = useInitial(async () => {
@@ -259,22 +285,32 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  logger.debug("[DEBUG-RENDER] before livekitRoomItems$");
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
+  logger.debug("[DEBUG-RENDER] before participantCount$");
   const participantCount = useBehavior(vm.participantCount$);
+  logger.debug("[DEBUG-RENDER] before reconnecting$");
   const reconnecting = useBehavior(vm.reconnecting$);
+  logger.debug("[DEBUG-RENDER] before windowMode$");
   const windowMode = useBehavior(vm.windowMode$);
+  logger.debug("[DEBUG-RENDER] before layout$");
   const layout = useBehavior(vm.layout$);
+  logger.debug("[DEBUG-RENDER] before tileStoreGeneration$");
   const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
   const [debugTileLayout] = useSetting(debugTileLayoutSetting);
+  logger.debug("[DEBUG-RENDER] before gridMode$");
   const gridMode = useBehavior(vm.gridMode$);
+  logger.debug("[DEBUG-RENDER] before showHeader$");
   const showHeader = useBehavior(vm.showHeader$);
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
 
+  logger.debug("[DEBUG-RENDER] before fatalError$");
   const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.fatalError$);
+  logger.debug("[DEBUG-RENDER] after fatalError$, value:", fatalCallError);
   // Stop the rendering and throw for the error boundary
   if (fatalCallError) {
     logger.debug("fatalCallError stop rendering", fatalCallError);
